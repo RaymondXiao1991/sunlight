@@ -3,10 +3,12 @@ package main
 import (
 	"fmt"
 	"log"
+	"ray/embrice/constant"
 	"ray/embrice/entity"
 
 	"github.com/excelize"
 	"github.com/tealeg/xlsx"
+	"strconv"
 )
 
 //func GetDataFromExcel() map[int]map[int]map[int]string {
@@ -64,21 +66,61 @@ func GetDataFromExcel2() []*entity.Goods {
 	}
 
 	// Get value from cell by given worksheet name and axis.
-	cell := xlsx.GetCellValue("Sheet1", "B2")
-	fmt.Println("cell:", cell)
+	//	cell := xlsx.GetCellValue("Sheet1", "B2")
+	//	fmt.Println("cell:", cell)
 
 	// Get all the rows in the Sheet1.
 	rows := xlsx.GetRows("Sheet1")
 	for r, row := range rows {
-		fmt.Println(rows[r])
-		for _, colCell := range row {
-			//product := new(entity.Goods)
-			fmt.Println("xxx:", colCell)
-			//	product.Name = colCell
-			//	product.Price = colCell
-			//	goods = append(goods, product)
+		if r == 0 {
+			continue
 		}
-		//fmt.Println()
+		product := new(entity.Goods)
+		for c, colCell := range row {
+			switch c {
+			case constant.TYPE_NAME:
+				product.Name = colCell
+			case constant.TYPE_PRICE:
+				product.Price, _ = strconv.ParseFloat(colCell, 64)
+			case constant.TYPE_INVENTORY:
+				product.Inventory, _ = strconv.Atoi(colCell)
+			default:
+			}
+		}
+		goods = append(goods, product)
+	}
+	return goods
+}
+
+func SearchDataFromExcel(name string) []*entity.Goods {
+	goods := make([]*entity.Goods, 0)
+	xlsx, err := excelize.OpenFile("/home/qingyang/Desktop/sunlight.xlsx")
+	if err != nil {
+		fmt.Println(err)
+		return nil
+	}
+
+	// Get all the rows in the Sheet1.
+	rows := xlsx.GetRows("Sheet1")
+	for r, row := range rows {
+		if r == 0 {
+			continue
+		}
+		product := new(entity.Goods)
+		for c, colCell := range row {
+			switch c {
+			case constant.TYPE_NAME:
+				product.Name = colCell
+			case constant.TYPE_PRICE:
+				f, _ := strconv.ParseFloat(colCell, 64)
+				product.Price = f
+			case constant.TYPE_INVENTORY:
+				i, _ := strconv.Atoi(colCell)
+				product.Inventory = i
+			default:
+			}
+		}
+		goods = append(goods, product)
 	}
 	return goods
 }
@@ -86,12 +128,12 @@ func GetDataFromExcel2() []*entity.Goods {
 // CheckErr 检查错误
 func CheckErr(err error) {
 	if err != nil {
-		fmt.Errorf(err.Error())
+		fmt.Println(err.Error())
 		panic(err)
 	}
 }
 
-//xlsx文件解析
+// ExcelParse xlsx文件解析
 func ExcelParse(fileName string) []string {
 	filePath := "/home/qingyang/Desktop/" + fileName
 	xlFile, err := xlsx.OpenFile(filePath)
